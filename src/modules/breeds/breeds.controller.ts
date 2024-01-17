@@ -11,6 +11,7 @@ import {
   Query,
   UseGuards,
   Put,
+  HttpStatus,
 } from '@nestjs/common';
 import { reply } from '../../app/utils/reply';
 
@@ -47,10 +48,10 @@ export class BreedsController {
       pagination,
     });
 
-    return reply({ res, results: breeds });
+    return reply({ res, results: [HttpStatus.OK, breeds] });
   }
 
-  /** Post one Breeds */
+  /** Post one Breed */
   @Post(`/`)
   @UseGuards(JwtAuthGuard)
   async createOne(
@@ -67,10 +68,10 @@ export class BreedsController {
       userCreatedId: user?.id,
     });
 
-    return reply({ res, results: breed });
+    return reply({ res, results: [HttpStatus.CREATED, breed] });
   }
 
-  /** Post one Breeds */
+  /** Update one Breed */
   @Put(`/:breedId`)
   @UseGuards(JwtAuthGuard)
   async updateOne(
@@ -120,6 +121,6 @@ export class BreedsController {
       { deletedAt: new Date() },
     );
 
-    return reply({ res, results: breed });
+    return reply({ res, results: [HttpStatus.ACCEPTED, breed] });
   }
 }

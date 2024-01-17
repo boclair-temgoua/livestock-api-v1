@@ -11,6 +11,8 @@ import {
   Query,
   UseGuards,
   Put,
+  HttpStatus,
+  HttpException,
 } from '@nestjs/common';
 import { reply } from '../../app/utils/reply';
 
@@ -27,7 +29,7 @@ export class AnimalStatusesController {
   async findAll(@Res() res) {
     const animalStatus = await this.animalStatusesService.findAll();
 
-    return reply({ res, results: animalStatus });
+    return reply({ res, results: [HttpStatus.OK, animalStatus] });
   }
 
   /** Post one Animal status */
@@ -44,19 +46,32 @@ export class AnimalStatusesController {
       color,
     });
 
-    return reply({ res, results: animalStatus });
+    return reply({
+      res,
+      results: [
+        HttpStatus.CREATED,
+        'Animal status Created successfully',
+        animalStatus,
+      ],
+    });
   }
 
   /** Update one animal status */
-  @Put(`/:animalStatusId`)
+  @Put(`/:animalstatusId`)
   @UseGuards(JwtAuthGuard)
   async updateOne(
     @Res() res,
     @Req() req,
     @Body() body: CreateOrUpdateAnimalStatusesDto,
-    @Param('animalStatusId', ParseUUIDPipe) animalStatusId: string,
+    @Param('animalstatusId', ParseUUIDPipe) animalStatusId: string,
   ) {
     const { title, color } = body;
+
+    if (!animalStatusId)
+      throw new HttpException(
+        `${animalStatusId} doesn't exists please change`,
+        HttpStatus.NOT_FOUND,
+      );
 
     const animalStatus = await this.animalStatusesService.updateOne(
       { animalStatusId },
@@ -66,7 +81,14 @@ export class AnimalStatusesController {
       },
     );
 
-    return reply({ res, results: animalStatus });
+    return reply({
+      res,
+      results: [
+        HttpStatus.ACCEPTED,
+        'Animal Status Updated successfully',
+        animalStatus,
+      ],
+    });
   }
 
   /** Get one animal status */
@@ -74,27 +96,44 @@ export class AnimalStatusesController {
   @UseGuards(JwtAuthGuard)
   async getOneByIdUser(
     @Res() res,
-    @Query('animalStatusId', ParseUUIDPipe) animalStatusId: string,
+    @Query('animalstatusId', ParseUUIDPipe) animalStatusId: string,
   ) {
+    if (!animalStatusId)
+      throw new HttpException(
+        `${animalStatusId} doesn't exists please change`,
+        HttpStatus.NOT_FOUND,
+      );
     const animalStatus = await this.animalStatusesService.findOneBy({
       animalStatusId,
     });
 
-    return reply({ res, results: animalStatus });
+    return reply({ res, results: [HttpStatus.ACCEPTED, animalStatus] });
   }
 
   /** Delete animal status*/
-  @Delete(`/delete/:animalStatusId`)
+  @Delete(`/delete/:animalstatusId`)
   @UseGuards(JwtAuthGuard)
   async deleteOne(
     @Res() res,
-    @Param('animalStatusId', ParseUUIDPipe) animalStatusId: string,
+    @Param('animalstatusId', ParseUUIDPipe) animalStatusId: string,
   ) {
+    if (!animalStatusId)
+      throw new HttpException(
+        `${animalStatusId} doesn't exists please change`,
+        HttpStatus.NOT_FOUND,
+      );
     const animalStatus = await this.animalStatusesService.updateOne(
       { animalStatusId },
       { deletedAt: new Date() },
     );
 
-    return reply({ res, results: animalStatus });
+    return reply({
+      res,
+      results: [
+        HttpStatus.ACCEPTED,
+        'Animal Status Deleted successfully',
+        animalStatus,
+      ],
+    });
   }
 }

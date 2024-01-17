@@ -11,6 +11,8 @@ import {
   Query,
   UseGuards,
   Put,
+  HttpException,
+  HttpStatus,
 } from '@nestjs/common';
 import { reply } from '../../app/utils/reply';
 
@@ -23,11 +25,13 @@ import {
   PaginationType,
 } from '../../app/utils/pagination/with-pagination';
 import { JwtAuthGuard } from '../users/middleware';
+import { BreedingsService } from '../breedings/breedings.service';
 
 @Controller('check-pregnancies')
 export class CheckPregnanciesController {
   constructor(
     private readonly checkPregnanciesService: CheckPregnanciesService,
+    private readonly breedingsService: BreedingsService,
   ) {}
 
   /** Get all CheckPregnancies */
@@ -65,21 +69,34 @@ export class CheckPregnanciesController {
     const { user } = req;
     const { date, note, farrowingDate, method, result, breedingId } = body;
 
+    const findOneBreeding = await this.breedingsService.findOneBy({
+      breedingId,
+    });
+
+    if (!findOneBreeding)
+      throw new HttpException(
+        `${findOneBreeding.animalId} isn't eligible for check please change`,
+        HttpStatus.NOT_FOUND,
+      );
+
     const checkPregnancy = await this.checkPregnanciesService.createOne({
       date,
       note,
       farrowingDate,
       method,
       result,
-      breedingId,
+      breedingId: findOneBreeding.id,
       organizationId: user?.organizationId,
       userCreatedId: user?.id,
     });
 
-    return reply({ res, results: checkPregnancy });
+    return reply({
+      res,
+      results: [HttpStatus.CREATED, 'CheckPregnancy Created', checkPregnancy],
+    });
   }
 
-  /** Update one CheckPregnancies */
+  /** Update one CheckPregnancy */
   @Put(`/:checkPregnancyId`)
   @UseGuards(JwtAuthGuard)
   async updateOne(
@@ -90,6 +107,21 @@ export class CheckPregnanciesController {
   ) {
     const { user } = req;
     const { date, note, farrowingDate, method, result, breedingId } = body;
+    const findOneBreeding = await this.breedingsService.findOneBy({
+      breedingId,
+    });
+
+    if (!checkPregnancyId)
+      throw new HttpException(
+        `${checkPregnancyId} doesn't exists please change`,
+        HttpStatus.NOT_FOUND,
+      );
+
+    if (!findOneBreeding)
+      throw new HttpException(
+        `${findOneBreeding.animalId} isn't eligible for check please change`,
+        HttpStatus.NOT_FOUND,
+      );
 
     const checkPregnancy = await this.checkPregnanciesService.updateOne(
       { checkPregnancyId },
@@ -99,41 +131,60 @@ export class CheckPregnanciesController {
         farrowingDate,
         method,
         result,
-        breedingId,
+        breedingId: findOneBreeding.id,
         organizationId: user?.organizationId,
         userCreatedId: user?.id,
       },
     );
 
-    return reply({ res, results: checkPregnancy });
+    return reply({
+      res,
+      results: [
+        HttpStatus.CREATED,
+        'CheckPregnancy Updated Successfully',
+        checkPregnancy,
+      ],
+    });
   }
 
-  /** Get one CheckPregnancies */
+  /** Get one CheckPregnancy */
   @Get(`/view`)
   @UseGuards(JwtAuthGuard)
   async getOneByIdUser(
     @Res() res,
     @Query('checkPregnancyId', ParseUUIDPipe) checkPregnancyId: string,
   ) {
+    if (!checkPregnancyId)
+      throw new HttpException(
+        `${checkPregnancyId} doesn't exists please change`,
+        HttpStatus.NOT_FOUND,
+      );
+
     const checkPregnancy = await this.checkPregnanciesService.findOneBy({
       checkPregnancyId,
     });
 
-    return reply({ res, results: checkPregnancy });
+    return reply({ res, results: [HttpStatus.CREATED, checkPregnancy] });
   }
 
-  /** Delete one CheckPregnancies */
+  /** Delete one CheckPregnancy */
   @Delete(`/delete/:checkPregnancyId`)
   @UseGuards(JwtAuthGuard)
   async deleteOne(
     @Res() res,
     @Param('checkPregnancyId', ParseUUIDPipe) checkPregnancyId: string,
   ) {
+    if (!checkPregnancyId)
+      throw new HttpException(
+        `${checkPregnancyId} doesn't exists please change`,
+        HttpStatus.NOT_FOUND,
+      );
+
     const checkPregnancy = await this.checkPregnanciesService.updateOne(
       { checkPregnancyId },
       { deletedAt: new Date() },
     );
 
-    return reply({ res, results: checkPregnancy });
+    return reply({ res, results: [HttpStatus.ACCEPTED, checkPregnancy] });
   }
 }

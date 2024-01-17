@@ -95,14 +95,6 @@ export class AnimalsController {
         HttpStatus.NOT_FOUND,
       );
 
-    const breed = await this.breedsService.findOneBy({
-      breedId,
-    });
-
-    const findoneStatus = await this.animalStatusesService.findOneBy({
-      animalStatusId,
-    });
-
     const animal = await this.animalsService.createOne({
       code,
       codeFather,
@@ -113,14 +105,17 @@ export class AnimalsController {
       type,
       productionPhase,
       electronicCode,
-      animalStatusId: findoneStatus?.id,
+      animalStatusId,
       locationId: findOneLocation?.id,
-      breedId: breed?.id,
+      breedId,
       organizationId: user?.organizationId,
       userCreatedId: user?.id,
     });
 
-    return reply({ res, results: [HttpStatus.CREATED, animal] });
+    return reply({
+      res,
+      results: [HttpStatus.CREATED, 'Animal Created successfully', animal],
+    });
   }
 
   /** Update one Animals */
@@ -192,7 +187,10 @@ export class AnimalsController {
       },
     );
 
-    return reply({ res, results: [HttpStatus.ACCEPTED, animal] });
+    return reply({
+      res,
+      results: [HttpStatus.ACCEPTED, 'Animal Updated successfully', animal],
+    });
   }
 
   /** Get one Animal */
@@ -212,7 +210,7 @@ export class AnimalsController {
       );
     }
 
-    return reply({ res, results: animal });
+    return reply({ res, results: [HttpStatus.ACCEPTED, animal] });
   }
 
   /** Delete one Animal */
@@ -233,6 +231,9 @@ export class AnimalsController {
       { deletedAt: new Date() },
     );
 
-    return reply({ res, results: [HttpStatus.ACCEPTED, animal] });
+    return reply({
+      res,
+      results: [HttpStatus.ACCEPTED, 'Animal Deleted successfully', animal],
+    });
   }
 }

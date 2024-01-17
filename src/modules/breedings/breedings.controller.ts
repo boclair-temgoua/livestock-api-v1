@@ -11,6 +11,8 @@ import {
   Query,
   UseGuards,
   Put,
+  HttpException,
+  HttpStatus,
 } from '@nestjs/common';
 import { reply } from '../../app/utils/reply';
 
@@ -23,10 +25,14 @@ import {
   PaginationType,
 } from '../../app/utils/pagination/with-pagination';
 import { JwtAuthGuard } from '../users/middleware';
+import { AnimalsService } from '../animals/animals.service';
 
 @Controller('breedings')
 export class BreedingsController {
-  constructor(private readonly breedingsService: BreedingsService) {}
+  constructor(
+    private readonly breedingsService: BreedingsService,
+    private readonly animalsService: AnimalsService,
+  ) {}
 
   /** Get all Breedings */
   @Get(`/`)
@@ -49,10 +55,10 @@ export class BreedingsController {
       organizationId: user?.organizationId,
     });
 
-    return reply({ res, results: breedings });
+    return reply({ res, results: [HttpStatus.OK, breedings] });
   }
 
-  /** Post one Breedings */
+  /** Post one Breeding */
   @Post(`/`)
   @UseGuards(JwtAuthGuard)
   async createOne(
@@ -63,19 +69,32 @@ export class BreedingsController {
     const { user } = req;
     const { date, note, method, animalId } = body;
 
+    const findOneAnimal = await this.animalsService.findOneBy({
+      animalId,
+    });
+
+    if (!findOneAnimal)
+      throw new HttpException(
+        `Animal number:${findOneAnimal.code} doesn't exists please change`,
+        HttpStatus.NOT_FOUND,
+      );
+
     const breeding = await this.breedingsService.createOne({
       date,
       note,
       method,
-      animalId,
+      animalId: findOneAnimal.id,
       organizationId: user?.organizationId,
       userCreatedId: user?.id,
     });
 
-    return reply({ res, results: breeding });
+    return reply({
+      res,
+      results: [HttpStatus.CREATED, 'Breeding Created successfully', breeding],
+    });
   }
 
-  /** Post one Breedings */
+  /** Update one Breeding */
   @Put(`/:breedingId`)
   @UseGuards(JwtAuthGuard)
   async updateOne(
@@ -87,33 +106,51 @@ export class BreedingsController {
     const { user } = req;
     const { date, note, method, animalId } = body;
 
+    if (!breedingId)
+      throw new HttpException(
+        `${breedingId} doesn't exists please change`,
+        HttpStatus.NOT_FOUND,
+      );
+
+    const findOneAnimal = await this.animalsService.findOneBy({
+      animalId,
+    });
+
     const breeding = await this.breedingsService.updateOne(
       { breedingId },
       {
         date,
         note,
         method,
-        animalId,
+        animalId: findOneAnimal.id,
         organizationId: user?.organizationId,
         userCreatedId: user?.id,
       },
     );
 
-    return reply({ res, results: breeding });
+    return reply({
+      res,
+      results: [HttpStatus.ACCEPTED, 'Breeding Updated successfully', breeding],
+    });
   }
 
-  /** Get one Breedings */
+  /** Get one Breeding */
   @Get(`/view`)
   @UseGuards(JwtAuthGuard)
   async getOneByIdUser(
     @Res() res,
     @Query('breedingId', ParseUUIDPipe) breedingId: string,
   ) {
-    const Breeding = await this.breedingsService.findOneBy({
+    if (!breedingId)
+      throw new HttpException(
+        `${breedingId} doesn't exists please change`,
+        HttpStatus.NOT_FOUND,
+      );
+    const breeding = await this.breedingsService.findOneBy({
       breedingId,
     });
 
-    return reply({ res, results: Breeding });
+    return reply({ res, results: [HttpStatus.ACCEPTED, breeding] });
   }
 
   /** Delete one Breedings */
@@ -123,11 +160,19 @@ export class BreedingsController {
     @Res() res,
     @Param('breedingId', ParseUUIDPipe) breedingId: string,
   ) {
+    if (!breedingId)
+      throw new HttpException(
+        `${breedingId} doesn't exists please change`,
+        HttpStatus.NOT_FOUND,
+      );
     const breeding = await this.breedingsService.updateOne(
       { breedingId },
       { deletedAt: new Date() },
     );
 
-    return reply({ res, results: breeding });
+    return reply({
+      res,
+      results: [HttpStatus.ACCEPTED, 'Breeding Deleted successfully', breeding],
+    });
   }
 }
