@@ -134,7 +134,7 @@ export class BreedingsService {
   }
 
   /** Find one breeding in database. */
-  async findOneBredingBy(selections: GetOneBreedingsSelections): Promise<any> {
+  async findOneBreedingBy(selections: GetOneBreedingsSelections): Promise<any> {
     const prismaWhereBreeding = {} as Prisma.BreedingWhereInput;
     const prismaWhereAnimal = {} as Prisma.AnimalWhereInput;
 

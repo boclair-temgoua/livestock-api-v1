@@ -312,7 +312,7 @@ export class BreedingsController {
       );
     }
 
-    const findOnebreeding = await this.breedingsService.findOneBredingBy({
+    const findOnebreeding = await this.breedingsService.findOneBreedingBy({
       animalId,
       gender: findOneAnimal?.gender,
       organizationId: user?.organizationId,
