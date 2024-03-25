@@ -3,12 +3,15 @@ import {
   Controller,
   Delete,
   Get,
+  HttpException,
+  HttpStatus,
   Param,
   ParseUUIDPipe,
   Post,
   Query,
   Req,
   Res,
+  UseGuards,
 } from '@nestjs/common';
 import { reply } from '../../app/utils/reply';
 
@@ -18,6 +21,7 @@ import {
   PaginationType,
 } from '../../app/utils/pagination/with-pagination';
 import { SearchQueryDto } from '../../app/utils/search-query/search-query.dto';
+import { UserAuthGuard } from '../users/middleware';
 import { CreateOrUpdateContactUsDto } from './contact-us.dto';
 import { ContactUsService } from './contact-us.service';
 
@@ -25,7 +29,7 @@ import { ContactUsService } from './contact-us.service';
 export class ContactUsController {
   constructor(private readonly contactUsService: ContactUsService) {}
 
-  /** Get all ContactUs */
+  /** Get all Contacts */
   @Get(`/`)
   async findAll(
     @Res() res,
@@ -45,7 +49,7 @@ export class ContactUsController {
     return reply({ res, results: contactUs });
   }
 
-  /** Post one ContactUs */
+  /** Post one Contact */
   @Post(`/`)
   async createOne(
     @Res() res,
@@ -66,27 +70,39 @@ export class ContactUsController {
     return reply({ res, results: contactUs });
   }
 
-  /** Get one ContactUs */
-  @Get(`/show/:contactUsId`)
-  // @UseGuards(JwtAuthGuard)
+  /** Get one Contact */
+  @Get(`/show/:contactId`)
+  @UseGuards(UserAuthGuard)
   async getOneByIdUser(
     @Res() res,
-    @Param('contactUsId', ParseUUIDPipe) contactUsId: string,
+    @Param('contactId', ParseUUIDPipe) contactId: string,
   ) {
-    const user = await this.contactUsService.findOneBy({ contactUsId });
+    const user = await this.contactUsService.findOneBy({ contactId });
 
     return reply({ res, results: user });
   }
 
-  /** Delete one ContactUs */
-  @Delete(`/delete/:contactUsId`)
-  // @UseGuards(JwtAuthGuard)
+  /** Delete one Contact */
+  @Delete(`/delete/:contactId`)
+  @UseGuards(UserAuthGuard)
   async deleteOne(
     @Res() res,
-    @Param('contactUsId', ParseUUIDPipe) contactUsId: string,
+    @Req() req,
+    @Param('contactId', ParseUUIDPipe) contactId: string,
   ) {
+    const { user } = req;
+    const fineOnecontributor = await this.contactUsService.findOneBy({
+      contactId,
+      organizationId: user?.organizationId,
+    });
+    if (!fineOnecontributor)
+      throw new HttpException(
+        `ContributorId: ${contactId} doesn't exists please change`,
+        HttpStatus.NOT_FOUND,
+      );
+
     const contactUs = await this.contactUsService.updateOne(
-      { contactUsId },
+      { contactId },
       { deletedAt: new Date() },
     );
 
