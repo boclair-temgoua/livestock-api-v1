@@ -4,13 +4,15 @@ import {
   IsOptional,
   IsString,
   IsUUID,
-  MaxLength,
 } from 'class-validator';
 
-export class CreateOrUpdateDeathsDto {
+export class CreateOrUpdateEggHavestingsDto {
+  @IsNotEmpty()
+  @IsNumber()
+  quantity: number;
+
   @IsOptional()
   @IsString()
-  @MaxLength(100)
   note: string;
 
   @IsNotEmpty()
@@ -18,10 +20,10 @@ export class CreateOrUpdateDeathsDto {
   date: Date;
 
   @IsNotEmpty()
-  @IsNumber()
-  number: number;
+  @IsString()
+  dueDate: Date;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
   @IsUUID()
   batchId: string;

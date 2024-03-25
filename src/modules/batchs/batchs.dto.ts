@@ -1,36 +1,34 @@
 import { BirdType } from '@prisma/client';
 import {
   IsEnum,
-  IsInt,
   IsNotEmpty,
-  IsOptional,
+  IsNumber,
   IsString,
+  IsUUID,
 } from 'class-validator';
 
-export class CreateOrUpdateLocationsDto {
+export class CreateOrUpdateBatchsDto {
   @IsNotEmpty()
-  @IsInt()
-  squareMeter: number;
+  @IsNumber()
+  quantity: number;
 
   @IsNotEmpty()
-  @IsInt()
-  manger: number;
+  @IsNumber()
+  weight: number;
 
   @IsNotEmpty()
-  @IsInt()
-  through: number;
-
-  @IsNotEmpty()
-  @IsInt()
-  number: number;
+  @IsString()
+  @IsUUID()
+  locationId: string;
 
   @IsNotEmpty()
   @IsString()
   @IsEnum(BirdType)
   type: BirdType;
 }
-export class GetLocationsQueryDto {
-  @IsOptional()
+
+export class GetBirdsByType {
+  @IsNotEmpty()
   @IsString()
   @IsEnum(BirdType)
   type: BirdType;

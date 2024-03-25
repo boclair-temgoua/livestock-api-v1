@@ -14,26 +14,26 @@ import {
   Res,
   UseGuards,
 } from '@nestjs/common';
+import { reply } from '../../app/utils/reply';
+
 import { RequestPaginationDto } from '../../app/utils/pagination/request-pagination.dto';
 import {
-  PaginationType,
   addPagination,
+  PaginationType,
 } from '../../app/utils/pagination/with-pagination';
-import { reply } from '../../app/utils/reply';
 import { SearchQueryDto } from '../../app/utils/search-query/search-query.dto';
 import { BatchsService } from '../batchs/batchs.service';
 import { UserAuthGuard } from '../users/middleware';
-import { CreateOrUpdateFeedingsDto } from './feedings.dto';
-import { FeedingsService } from './feedings.service';
+import { CreateOrUpdateEggHavestingsDto } from './incubation.dto';
+import { IncubationsService } from './incubation.service';
 
-@Controller('feedings')
-export class FeedingsController {
+@Controller('incubations')
+export class IncubationsController {
   constructor(
-    private readonly feedingsService: FeedingsService,
+    private readonly incubationsService: IncubationsService,
     private readonly batchsService: BatchsService,
   ) {}
 
-  /** Get all Feedings */
   @Get(`/`)
   @UseGuards(UserAuthGuard)
   async findAll(
@@ -48,141 +48,141 @@ export class FeedingsController {
     const { take, page, sort } = requestPaginationDto;
     const pagination: PaginationType = addPagination({ page, take, sort });
 
-    const feedings = await this.feedingsService.findAll({
+    const eggHavestings = await this.incubationsService.findAll({
       search,
       pagination,
       organizationId: user?.organizationId,
     });
 
-    return reply({ res, results: feedings });
+    return reply({ res, results: eggHavestings });
   }
 
-  /** Post one feeding */
+  /** Post one incubation */
   @Post(`/create`)
   @UseGuards(UserAuthGuard)
   async createOne(
     @Res() res,
     @Req() req,
-    @Body() body: CreateOrUpdateFeedingsDto,
+    @Body() body: CreateOrUpdateEggHavestingsDto,
   ) {
     const { user } = req;
-    const { date, quantity, feedType, batchId, note } = body;
+    const { quantity, date, dueDate, note, batchId } = body;
 
     const findOneBatch = await this.batchsService.findOneBy({
       batchId,
     });
     if (!findOneBatch)
       throw new HttpException(
-        `BatchId: ${batchId} doesn't exists please change`,
+        `BatchId: ${batchId} doesn't exists`,
         HttpStatus.NOT_FOUND,
       );
 
-    const feeding = await this.feedingsService.createOne({
-      date,
+    const eggHavesting = await this.incubationsService.createOne({
       note,
+      date,
+      dueDate,
       quantity,
-      feedType,
       batchId: findOneBatch?.id,
       organizationId: user?.organizationId,
       userCreatedId: user?.id,
     });
 
-    return reply({ res, results: [HttpStatus.CREATED, feeding] });
+    return reply({ res, results: eggHavesting });
   }
 
-  /** Update one feeding */
-  @Put(`/:feedingId/edit`)
+  /** Update one Incubation */
+  @Put(`/:incubationId/edit`)
   @UseGuards(UserAuthGuard)
   async updateOne(
     @Res() res,
     @Req() req,
-    @Body() body: CreateOrUpdateFeedingsDto,
-    @Param('feedingId', ParseUUIDPipe) feedingId: string,
+    @Body() body: CreateOrUpdateEggHavestingsDto,
+    @Param('incubationId', ParseUUIDPipe) incubationId: string,
   ) {
     const { user } = req;
-    const { date, quantity, feedType, note, batchId } = body;
+    const { quantity, date, dueDate, note, batchId } = body;
 
     const findOneBatch = await this.batchsService.findOneBy({
       batchId,
+      organizationId: user?.organizationId,
     });
     if (!findOneBatch)
       throw new HttpException(
-        `BatchId: ${batchId} doesn't exists please change`,
+        `BatchId: ${batchId} doesn't exists, please change`,
         HttpStatus.NOT_FOUND,
       );
 
-    const findOneFeeding = await this.feedingsService.findOneBy({
-      feedingId,
-      organizationId: user?.organizationId,
+    const findOneIncubation = await this.incubationsService.findOneBy({
+      incubationId,
     });
-    if (!findOneFeeding)
+    if (!findOneIncubation)
       throw new HttpException(
-        `FeedingId: ${feedingId} doesn't exists please change`,
+        `IncubationId: ${incubationId} doesn't exists, please change`,
         HttpStatus.NOT_FOUND,
       );
 
-    const feed = await this.feedingsService.updateOne(
-      { feedingId: findOneFeeding?.id },
+    const eggHavesting = await this.incubationsService.updateOne(
+      { incubationId: findOneIncubation?.id },
       {
-        date,
         note,
+        date,
+        dueDate,
         quantity,
-        feedType,
         batchId: findOneBatch?.id,
         organizationId: user?.organizationId,
         userCreatedId: user?.id,
       },
     );
 
-    return reply({ res, results: feed });
+    return reply({ res, results: eggHavesting });
   }
 
-  /** Get one feeding */
-  @Get(`/view/feedingId`)
+  /** Get one incubation */
+  @Get(`/view/:incubationId`)
   @UseGuards(UserAuthGuard)
-  async getOneByIdFeeding(
+  async getOneByIdWeaning(
     @Res() res,
-    @Res() req,
-    @Param('feedingId', ParseUUIDPipe) feedingId: string,
+    @Req() req,
+    @Param('incubationId', ParseUUIDPipe) incubationId: string,
   ) {
     const { user } = req;
-    const findOneFeeding = await this.feedingsService.findOneBy({
-      feedingId,
+    const findOneIncubation = await this.incubationsService.findOneBy({
+      incubationId,
       organizationId: user?.organizationId,
     });
-    if (!findOneFeeding)
+    if (!findOneIncubation)
       throw new HttpException(
-        `FeedingId: ${feedingId} doesn't exists please change`,
+        `IncubationId: ${incubationId} doesn't exists, please change`,
         HttpStatus.NOT_FOUND,
       );
 
-    return reply({ res, results: findOneFeeding });
+    return reply({ res, results: findOneIncubation });
   }
 
-  /** Delete one feeding */
-  @Delete(`/delete/:feedingId`)
+  /** Delete Incubation */
+  @Delete(`/delete/:incubationId`)
   @UseGuards(UserAuthGuard)
   async deleteOne(
     @Res() res,
     @Req() req,
-    @Param('feedingId', ParseUUIDPipe) feedingId: string,
+    @Param('weaningId', ParseUUIDPipe) incubationId: string,
   ) {
     const { user } = req;
-    const findOneFeeding = await this.feedingsService.findOneBy({
-      feedingId,
+    const findOneIncubation = await this.incubationsService.findOneBy({
+      incubationId,
       organizationId: user?.organizationId,
     });
-    if (!findOneFeeding)
+    if (!findOneIncubation)
       throw new HttpException(
-        `FeedingId: ${feedingId} doesn't exists please change`,
+        `IncubationId: ${incubationId} doesn't exists, please change`,
         HttpStatus.NOT_FOUND,
       );
 
-    const feeding = await this.feedingsService.updateOne(
-      { feedingId: findOneFeeding?.id },
+    await this.incubationsService.updateOne(
+      { incubationId: findOneIncubation?.id },
       { deletedAt: new Date() },
     );
 
-    return reply({ res, results: feeding });
+    return reply({ res, results: 'Incubation deleted successfully' });
   }
 }
