@@ -1,4 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { ContactUs, Prisma } from '@prisma/client';
+import { DatabaseService } from '../../app/database/database.service';
+import {
+  WithPaginationResponse,
+  withPagination,
+} from '../../app/utils/pagination';
+import { useCatch } from '../../app/utils/use-catch';
 import {
   CreateContactUsOptions,
   GetContactUsSelections,
@@ -6,13 +13,6 @@ import {
   UpdateContactUsOptions,
   UpdateContactUsSelections,
 } from './contact-us.type';
-import { DatabaseService } from '../../app/database/database.service';
-import {
-  WithPaginationResponse,
-  withPagination,
-} from '../../app/utils/pagination';
-import { ContactUs, Prisma } from '@prisma/client';
-import { useCatch } from '../../app/utils/use-catch';
 
 @Injectable()
 export class ContactUsService {
@@ -56,10 +56,10 @@ export class ContactUsService {
 
   /** Find one ContactUs to the database. */
   async findOneBy(selections: GetOneContactUsSelections) {
-    const { contactUsId } = selections;
+    const { contactId } = selections;
     const contact = await this.client.contactUs.findUnique({
       where: {
-        id: contactUsId,
+        id: contactId,
       },
     });
 
@@ -85,12 +85,12 @@ export class ContactUsService {
     selections: UpdateContactUsSelections,
     options: UpdateContactUsOptions,
   ): Promise<ContactUs> {
-    const { contactUsId } = selections;
+    const { contactId } = selections;
     const { fullName, email, subject, description, deletedAt } = options;
 
     const contactUs = this.client.contactUs.update({
       where: {
-        id: contactUsId,
+        id: contactId,
       },
       data: { fullName, email, subject, description, deletedAt },
     });

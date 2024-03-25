@@ -7,11 +7,12 @@ export type GetContactUsSelections = {
 };
 
 export type GetOneContactUsSelections = {
-  contactUsId: ContactUs['id'];
+  contactId?: ContactUs['id'];
+  organizationId?: string;
 };
 
 export type UpdateContactUsSelections = {
-  contactUsId: ContactUs['id'];
+  contactId: ContactUs['id'];
 };
 
 export type CreateContactUsOptions = Partial<ContactUs>;
