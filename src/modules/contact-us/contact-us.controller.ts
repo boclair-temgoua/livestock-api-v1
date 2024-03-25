@@ -70,17 +70,17 @@ export class ContactUsController {
     return reply({ res, results: contactUs });
   }
 
-  /** Get one Contact */
-  @Get(`/show/:contactId`)
-  @UseGuards(UserAuthGuard)
-  async getOneByIdUser(
-    @Res() res,
-    @Param('contactId', ParseUUIDPipe) contactId: string,
-  ) {
-    const user = await this.contactUsService.findOneBy({ contactId });
+  // /** Get one Contact */
+  // @Get(`/show/:contactId`)
+  // @UseGuards(UserAuthGuard)
+  // async getOneByIdUser(
+  //   @Res() res,
+  //   @Param('contactId', ParseUUIDPipe) contactId: string,
+  // ) {
+  //   const user = await this.contactUsService.findOneBy({ contactId });
 
-    return reply({ res, results: user });
-  }
+  //   return reply({ res, results: user });
+  // }
 
   /** Delete one Contact */
   @Delete(`/delete/:contactId`)

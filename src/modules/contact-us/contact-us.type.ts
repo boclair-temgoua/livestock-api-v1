@@ -7,8 +7,8 @@ export type GetContactUsSelections = {
 };
 
 export type GetOneContactUsSelections = {
-  contactId?: ContactUs['id'];
-  organizationId?: string;
+  contactId: ContactUs['id'];
+  organizationId: string;
 };
 
 export type UpdateContactUsSelections = {
